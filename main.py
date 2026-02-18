@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,11 +14,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class SimilarityRequest(BaseModel):
+class SearchRequest(BaseModel):
     docs: list[str]
     query: str
 
-# Lightweight deterministic embedding generator
 def get_embedding(text: str):
     seed = int(hashlib.md5(text.encode()).hexdigest(), 16) % (10**8)
     np.random.seed(seed)
@@ -28,8 +26,8 @@ def get_embedding(text: str):
 def cosine_similarity(a, b):
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
-@app.post("/similarity")
-def similarity(payload: SimilarityRequest):
+@app.post("/search")
+def search(payload: SearchRequest):
 
     docs = payload.docs
     query = payload.query
@@ -43,7 +41,6 @@ def similarity(payload: SimilarityRequest):
     ]
 
     top_indices = np.argsort(similarities)[::-1][:3]
-
     matches = [docs[i] for i in top_indices]
 
     return {"matches": matches}
